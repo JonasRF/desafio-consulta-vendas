@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.devsuperior.dsmeta.dto.SaleMinDTO;
 import com.devsuperior.dsmeta.entities.Sale;
 import com.devsuperior.dsmeta.repositories.SaleRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SaleService {
@@ -23,17 +24,17 @@ public class SaleService {
 	public SaleMinDTO findById(Long id) {
 		Optional<Sale> result = repository.findById(id);
 		Sale entity = result.get();
-		return new SaleMinDTO(entity);
-	}
+		return new SaleMinDTO(entity);	}
+
+    @Transactional(readOnly = true)
 	public Page<SaleMinDTO>searchSales(String minDate, String maxDate, String name, Pageable pageable) {
 
 		LocalDate today = LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault());
 
-		LocalDate min = minDate.equals("") ? today.minusDays(365) : LocalDate.parse(minDate);
+		LocalDate min = minDate.equals("") ? today.minusYears(1L) : LocalDate.parse(minDate);
 		LocalDate max = maxDate.equals("") ? today : LocalDate.parse(maxDate);
 
-		Page<Sale> page = repository.saleSummary(min, max, name, pageable);
-		return page.map(x -> new SaleMinDTO(x));
+		Page<Sale> result = repository.findReport(min, max, name, pageable);
+		return result.map(x -> new SaleMinDTO(x));
 	}
-
 }
