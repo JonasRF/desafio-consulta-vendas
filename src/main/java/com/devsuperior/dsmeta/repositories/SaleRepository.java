@@ -1,6 +1,8 @@
 package com.devsuperior.dsmeta.repositories;
 
 import com.devsuperior.dsmeta.dto.SaleMinDTO;
+import com.devsuperior.dsmeta.dto.SellerMinDTO;
+import com.devsuperior.dsmeta.projections.SellerMinProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,6 +22,10 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
             "LIKE UPPER(CONCAT('%', :name, '%')) ORDER BY obj.id")
     Page<Sale> findReport(LocalDate min, LocalDate max, String name, Pageable pageable);
 
-    @Query("SELECT obj FROM Sale obj JOIN FETCH obj.seller WHERE obj IN :sales")
-    List<Sale> filterDataSalesAndNameSeller(List<Sale> sales);
+    @Query(nativeQuery = true, value = "(SELECT seller.name AS sellerName, SUM(sale.amount) AS total " +
+            "FROM tb_sales sale " +
+            "INNER JOIN tb_seller seller ON sale.seller_id = seller.id " +
+            "WHERE sale.date BETWEEN :min AND :max " +
+            "GROUP BY seller.name)")
+    List<SellerMinProjection> findSummary(LocalDate min, LocalDate max);
 }
